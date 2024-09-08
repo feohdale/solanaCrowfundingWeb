@@ -4,6 +4,7 @@ import Home from './Home';
 import MyCagnotte from './MyCagnotte';
 import CreateCagnotte from './CreateCagnotte';
 import CagnotteList from './CagnotteList';
+import AdminPage from './AdminPage';
 
 const App = () => {
   return (
@@ -21,6 +22,9 @@ const App = () => {
             <li>
               <Link to="/List-cagnottes">Lister les cagnottes</Link>
             </li>
+            <li>
+              <Link to="/admin-section">admin Panel</Link>
+            </li>
           </ul>
         </nav>
 
@@ -33,6 +37,7 @@ const App = () => {
           <Route path="/my-cagnottes" element={<MyCagnotte />} />
           <Route path="/create-cagnotte" element={<CreateCagnotte />} />
           <Route path="/List-cagnottes" element={<CagnotteList />} />
+          <Route path="/Admin-section" element={<AdminPage />} />
           
           {/* Redirection des routes inconnues vers "Mes Cagnottes" */}
           <Route path="*" element={<Navigate to="/my-cagnottes" />} />
