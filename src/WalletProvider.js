@@ -16,14 +16,11 @@ export const WalletProvider = ({ children }) => {
   const connectWallet = async () => {
     if (window.solana && window.solana.isPhantom) {
       try {
-        // Eviter de reconnecter si déjà connecté
         if (wallet) return; 
-
         const response = await window.solana.connect();
         setWallet(response.publicKey);
         setWalletConnected(true);
 
-        // Connexion au réseau et initialisation du programme avec Anchor
         const connection = new Connection(NETWORK);
         const provider = new AnchorProvider(connection, window.solana, {
           preflightCommitment: "processed",
@@ -42,7 +39,6 @@ export const WalletProvider = ({ children }) => {
 
   // Fonction pour déconnecter le portefeuille
   const disconnectWallet = async () => {
-    console.log("Tentative de déconnexion du portefeuille...");
     if (window.solana && window.solana.isPhantom) {
       try {
         await window.solana.disconnect(); // Utiliser la méthode Phantom pour déconnecter
@@ -58,7 +54,6 @@ export const WalletProvider = ({ children }) => {
     }
   };
 
-  // Gérer automatiquement les événements de connexion et déconnexion de Phantom
   useEffect(() => {
     const handleConnect = (publicKey) => {
       console.log("Portefeuille connecté via événement:", publicKey.toBase58());
@@ -77,7 +72,6 @@ export const WalletProvider = ({ children }) => {
       window.solana.on("connect", handleConnect);
       window.solana.on("disconnect", handleDisconnect);
 
-      // Vérifier si le portefeuille est déjà connecté
       if (window.solana.isConnected) {
         handleConnect(window.solana.publicKey);
       }
@@ -93,19 +87,7 @@ export const WalletProvider = ({ children }) => {
 
   return (
     <WalletContext.Provider value={{ wallet, walletConnected, program, connectWallet, disconnectWallet }}>
-      <div>
-        {/* Affichage des boutons en fonction de l'état du portefeuille */}
-        {!walletConnected ? (
-          <button onClick={connectWallet}>Connecter Mon Portefeuille</button>
-        ) : (
-          <div>
-            <p>Portefeuille connecté : {wallet.toBase58()}</p>
-            <button onClick={disconnectWallet}>Déconnecter Mon Portefeuille</button>
-          </div>
-        )}
-        {/* Rendu des enfants */}
-        {children}
-      </div>
+      {children}
     </WalletContext.Provider>
   );
 };

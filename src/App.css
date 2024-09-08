@@ -1,38 +1,98 @@
-.App {
-  text-align: center;
+/* App.css */
+
+/* Importer la police Ubuntu */
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap');
+
+/* Couleurs globales basées sur une palette avec du vert pastel */
+:root {
+  --primary-color: #8fd3b4;   /* Vert pastel */
+  --secondary-color: #dc1fff; /* Violet néon */
+  --background-color: #0f0e13; /* Noir très foncé */
+  --text-color: #ffffff;      /* Blanc pour le texte */
+  --button-color: #8fd3b4;    /* Vert pastel pour les boutons */
+  --button-text-color: #ffffff; /* Texte des boutons en blanc */
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Appliquer la police Ubuntu à tout le document */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: 'Ubuntu', sans-serif; /* Utilisation de la police Ubuntu */
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+h1, h2, h3 {
+  color: var(--primary-color); /* Vert pastel pour les titres */
+  font-family: 'Ubuntu', sans-serif; /* Police Ubuntu pour les titres */
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+/* Menu de navigation */
+nav {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  background-color: var(--background-color);
+  padding: 10px 20px;
 }
 
-.App-link {
-  color: #61dafb;
+nav ul {
+  display: flex;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+nav ul li {
+  margin-right: 20px;
+}
+
+nav ul li a {
+  color: var(--text-color);
+  text-decoration: none;
+  font-weight: bold;
+  font-family: 'Ubuntu', sans-serif;
+}
+
+nav ul li a:hover {
+  color: var(--secondary-color); /* Violet néon au survol */
+}
+
+/* Alignement du bouton Connect Wallet */
+nav .wallet-button {
+  margin-left: auto; /* Aligner le bouton à droite */
+}
+
+/* Style des boutons en vert pastel */
+button {
+  background-color: var(--button-color); /* Fond vert pastel */
+  color: var(--button-text-color); /* Texte en blanc */
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'Ubuntu', sans-serif; /* Police Ubuntu pour les boutons */
+  transition: transform 0.2s ease-in-out;
+}
+
+button:hover {
+  transform: scale(1.05); /* Effet d'agrandissement au survol */
+}
+
+/* Section des cagnottes */
+.cagnotte {
+  border: 1px solid var(--primary-color); /* Bordure verte pastel */
+  padding: 15px;
+  margin-bottom: 20px;
+  background-color: rgba(0, 0, 0, 0.5); /* Fond semi-transparent */
+  color: var(--text-color); /* Texte en blanc */
+}
+
+input[type="text"] {
+  padding: 10px;
+  margin-right: 10px;
+  border: 1px solid var(--primary-color); /* Bordure verte pastel */
+  border-radius: 5px;
+  background-color: transparent;
+  color: var(--text-color); /* Texte en blanc */
 }
