@@ -1,31 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { Program, AnchorProvider, web3 } from '@project-serum/anchor';
-import BN from 'bn.js'; // Importer BN depuis bn.js
-import idl from './idl.json'; 
-
-// Adresse du programme Solana
-const programId = new PublicKey("8zjbcM6U4i4rqQVqeyacHU8NsZ9jYATwTCARQBudXNp8");
-
-// Cluster Devnet de Solana
-const network = "https://api.devnet.solana.com";
-
-// IDL du programme Solana
+import React, { useContext, useEffect, useState } from 'react';
+import { WalletContext } from './WalletProvider';
+import { PublicKey, SystemProgram } from '@solana/web3.js'; // Importer SystemProgram pour les transactions
+import BN from 'bn.js'; // Utiliser BN pour gérer les montants en lamports
 
 const CagnotteList = () => {
+  const { wallet, walletConnected, program } = useContext(WalletContext);
   const [cagnottes, setCagnottes] = useState([]);
-  const [contributionAmount, setContributionAmount] = useState(0); // État pour stocker le montant de la contribution
-
-  // Initialise la connexion et le provider Anchor
-  const connection = new Connection(network);
-  const provider = new AnchorProvider(connection, window.solana, {
-    preflightCommitment: "processed",
-  });
-
-  const program = new Program(idl, programId, provider);
+  const [contributionAmount, setContributionAmount] = useState(''); // Gérer le montant de la contribution
 
   // Fonction pour récupérer les cagnottes depuis la blockchain
   const fetchCagnottes = async () => {
+    if (!program || !wallet) return;
+
     try {
       const cagnottesAccounts = await program.account.cagnotte.all();
       setCagnottes(cagnottesAccounts);
@@ -34,85 +20,74 @@ const CagnotteList = () => {
     }
   };
 
-  // Charger les cagnottes au démarrage du composant
-  useEffect(() => {
-    fetchCagnottes();
-  }, []);
-
-  // Générer le PDA pour le compte de contribution
-  const getContributionPDA = async (cagnottePublicKey, userPublicKey) => {
-    const [contributionPda] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("contribution"),
-        cagnottePublicKey.toBuffer(),
-        userPublicKey.toBuffer(),
-      ],
-      programId
+  // Fonction pour générer le PDA du compte de contribution utilisateur
+  const getContributionPDA = async (cagnottePublicKey) => {
+    const [contributionPDA] = await PublicKey.findProgramAddress(
+      [Buffer.from('contribution'), cagnottePublicKey.toBuffer(), wallet.toBuffer()],
+      program.programId
     );
-    return contributionPda;
+    return contributionPDA;
   };
 
   // Fonction pour participer à une cagnotte
-  const participateInCagnotte = async (cagnottePublicKey) => {
-    const userPublicKey = provider.wallet.publicKey;
-
-    // Vérification que le portefeuille est bien connecté
-    if (!userPublicKey) {
-      alert("Veuillez connecter votre portefeuille.");
-      return;
-    }
-
-    if (contributionAmount <= 0) {
-      alert("Le montant doit être supérieur à 0.");
-      return;
-    }
+  const participateInCagnotte = async (cagnottePublicKey, amount) => {
+    if (!program || !wallet || !amount) return;
 
     try {
-      // Obtenir le PDA du compte de contribution
-      const contributionPda = await getContributionPDA(cagnottePublicKey, userPublicKey);
+      const contributionPDA = await getContributionPDA(cagnottePublicKey); // Récupérer le PDA pour la contribution
+      const amountInLamports = new BN(amount); // Convertir le montant en BN (BigNumber)
 
       const tx = await program.methods
-        .contribute(new BN(contributionAmount)) // Utilisation de BN depuis bn.js
+        .contribute(amountInLamports)
         .accounts({
-          cagnotte: cagnottePublicKey, // Clé publique de la cagnotte
-          user: userPublicKey, // Clé publique de l'utilisateur
-          contribution: contributionPda, // PDA pour le compte de contribution
-          systemProgram: web3.SystemProgram.programId,
+          cagnotte: cagnottePublicKey,
+          user: wallet,
+          contribution: contributionPDA, // Ajouter le PDA de la contribution
+          systemProgram: SystemProgram.programId,
         })
         .rpc();
-      alert(`Contribution réussie avec le hash de transaction : ${tx}`);
+
+      alert(`Contribution envoyée avec succès ! Transaction : ${tx}`);
+      await fetchCagnottes(); // Recharger les cagnottes après contribution
     } catch (error) {
       console.error("Erreur lors de la contribution", error);
     }
   };
 
+  // Charger les cagnottes au démarrage du composant
+  useEffect(() => {
+    if (walletConnected) {
+      fetchCagnottes();
+    }
+  }, [walletConnected]);
+
   return (
     <div>
       <h2>Liste des Cagnottes</h2>
-      {cagnottes.length > 0 ? (
+      {walletConnected && cagnottes.length > 0 ? (
         cagnottes.map((cagnotte, index) => (
           <div key={index} className="cagnotte">
             <h3>Nom: {String.fromCharCode(...cagnotte.account.name)}</h3>
             <p>Montant: {cagnotte.account.amount.toString()} Lamports</p>
             <p>Verrouillé: {cagnotte.account.locked ? 'Oui' : 'Non'}</p>
 
-            {/* Formulaire de participation */}
+            {/* Afficher un champ pour entrer le montant de la contribution */}
             <input
               type="number"
-              placeholder="Montant à contribuer (en Lamports)"
+              placeholder="Montant en lamports"
               value={contributionAmount}
               onChange={(e) => setContributionAmount(e.target.value)}
             />
             <button
-              onClick={() => participateInCagnotte(cagnotte.publicKey)}
-              disabled={cagnotte.account.locked} // Désactiver si la cagnotte est verrouillée
+              onClick={() => participateInCagnotte(cagnotte.publicKey, contributionAmount)}
+              disabled={cagnotte.account.locked || contributionAmount <= 0} // Désactiver si la cagnotte est verrouillée ou montant invalide
             >
               Participer
             </button>
           </div>
         ))
       ) : (
-        <p>Aucune cagnotte disponible</p>
+        <p>{walletConnected ? 'Aucune cagnotte disponible' : 'Connectez votre portefeuille pour voir les cagnottes'}</p>
       )}
     </div>
   );

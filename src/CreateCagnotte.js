@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
-import { PublicKey, Connection, SystemProgram } from '@solana/web3.js'; // Import correct depuis @solana/web3.js
-import { Program, AnchorProvider } from '@project-serum/anchor';
-import idl from './idl.json'; 
+import React, { useState, useContext } from 'react';
+import { WalletContext } from './WalletProvider'; // Importer le contexte Wallet
+import { PublicKey, SystemProgram } from '@solana/web3.js'; // Importer PublicKey et SystemProgram
 
 const CreateCagnotte = () => {
-  const [wallet, setWallet] = useState(null);
+  const { wallet, walletConnected, program } = useContext(WalletContext);
   const [cagnotteName, setCagnotteName] = useState('');
-
-  const programId = new PublicKey("8zjbcM6U4i4rqQVqeyacHU8NsZ9jYATwTCARQBudXNp8");
-  const connection = new Connection("https://api.devnet.solana.com");
 
   const createCagnotte = async () => {
     if (!cagnotteName) {
@@ -16,13 +12,7 @@ const CreateCagnotte = () => {
       return;
     }
 
-    if (!wallet) {
-      alert("Veuillez connecter votre portefeuille");
-      return;
-    }
-
-    const provider = new AnchorProvider(connection, window.solana, { preflightCommitment: "processed" });
-    const program = new Program(idl, programId, provider);
+    if (!wallet || !program) return;
 
     try {
       const tx = await program.methods
@@ -30,10 +20,10 @@ const CreateCagnotte = () => {
         .accounts({
           cagnotte: PublicKey.findProgramAddressSync(
             [Buffer.from('cagnotte'), wallet.toBuffer(), Buffer.from(cagnotteName)],
-            programId
+            program.programId
           )[0],
           user: wallet,
-          systemProgram: SystemProgram.programId, // Import correct de SystemProgram
+          systemProgram: SystemProgram.programId,
         })
         .rpc();
 
@@ -46,13 +36,19 @@ const CreateCagnotte = () => {
   return (
     <div>
       <h2>Créer une nouvelle Cagnotte</h2>
-      <input
-        type="text"
-        placeholder="Nom de la cagnotte"
-        value={cagnotteName}
-        onChange={(e) => setCagnotteName(e.target.value)}
-      />
-      <button onClick={createCagnotte}>Créer Cagnotte</button>
+      {walletConnected ? (
+        <>
+          <input
+            type="text"
+            placeholder="Nom de la cagnotte"
+            value={cagnotteName}
+            onChange={(e) => setCagnotteName(e.target.value)}
+          />
+          <button onClick={createCagnotte}>Créer Cagnotte</button>
+        </>
+      ) : (
+        <p>Connectez votre portefeuille pour créer une cagnotte.</p>
+      )}
     </div>
   );
 };
